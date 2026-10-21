@@ -1,0 +1,122 @@
+
+{
+  "info": {
+    "name": "Fuel Route Optimizer",
+    "description": "API assessment collection for route calculation and fuel-stop optimization.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Optimize Dallas to Houston",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"Dallas, Texas, USA\",\n  \"finish\": \"Houston, Texas, USA\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/routes/optimize/",
+        "description": "Calculates the driving route and estimates fuel cost and refuelling stops."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Returns HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Contains route geometry', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body).to.have.property('route');",
+              "    pm.expect(body.route.geometry.type).to.eql('LineString');",
+              "    pm.expect(body.route.geometry.coordinates.length).to.be.greaterThan(1);",
+              "});",
+              "",
+              "pm.test('Contains fuel optimization result', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body).to.have.property('fuel_optimization');",
+              "    pm.expect(body.fuel_optimization).to.have.property('status');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject Identical Start and Finish",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"Dallas, Texas, USA\",\n  \"finish\": \"Dallas, Texas, USA\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/routes/optimize/",
+        "description": "Checks request validation for identical start and finish locations."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Returns HTTP 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject Missing Finish Location",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+          "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"Dallas, Texas, USA\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/routes/optimize/",
+        "description": "Checks request validation when the finish location is missing."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Returns HTTP 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
