@@ -37,7 +37,7 @@ The API returns route geometry for map rendering, fuel-station candidates near t
 Clone the repository and enter its directory:
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/Haseeb1424/fuel-route-optimizer
 cd fuel-route-optimizer
 ```
 

@@ -103,6 +103,55 @@ class FuelOptimizationTests(SimpleTestCase):
                 msg=f"Infeasible leg: {leg}",
             )
 
+    def test_cheaper_stops_are_preferred_over_fewer_expensive_stops(self):
+        route = {
+            "type": "LineString",
+            "coordinates": [
+                [-100.0, 32.0],
+                [-99.0, 32.0],
+            ],
+        }
+
+        stations = [
+            # Cheap stations at approximately miles 225 and 675.
+            self.make_station("6001", -99.75, price=2.00),
+            self.make_station("6002", -99.25, price=2.00),
+
+            # An expensive station at approximately mile 450.
+            # One stop here is feasible, but costs more.
+            self.make_station("6003", -99.50, price=5.00),
+        ]
+
+        result = optimize_fuel_stops(
+            route_geometry=route,
+            route_distance_miles=900,
+            stations=stations,
+            mpg=10,
+            max_range_miles=500,
+        )
+
+        self.assertEqual(result["status"], "optimized")
+        self.assertEqual(result["fuel_stop_count"], 2)
+
+        selected_ids = [
+            stop["csv_source_id"]
+            for stop in result["fuel_stops"]
+        ]
+        self.assertEqual(selected_ids, ["6001", "6002"])
+
+        self.assertAlmostEqual(
+            result["total_fuel_cost_usd"],
+            180.00,
+            places=2,
+        )
+
+        for leg in result["legs"]:
+            self.assertLessEqual(
+                leg["distance_miles"],
+                500.01,
+                msg=f"Infeasible leg: {leg}",
+            )
+
     def test_ambiguous_prices_are_not_used(self):
         station = self.make_station(
             "3001", -96.5, match_status="ambiguous"
